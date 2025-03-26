@@ -1,8 +1,11 @@
 class DropBoxController {
   constructor() {
     this.btnSendFileEl = document.querySelector('#btn-send-file');
-    this.inputFileEl = document.querySelector('#files');
+    this.inputFilesEl = document.querySelector('#files');
     this.snackModalEl = document.querySelector('#react-snackbar-root');
+    this.progressBarEl = this.snackModalEl.querySelector('.mc-progress-bar-fg');
+    this.nameFileEl = this.snackModalEl.querySelector('.filename');
+    this.timeleftEl = this.snackModalEl.querySelector('.timeleft');
 
     this.initEvents();
   }
@@ -11,15 +14,15 @@ class DropBoxController {
     this.btnSendFileEl.addEventListener('click', (event) => {
       console.log('clicou', event);
 
-      this.inputFileEl.click();
+      this.inputFilesEl.click();
     });
 
-    this.inputFileEl.addEventListener('change', (event) => {
+    this.inputFilesEl.addEventListener('change', (event) => {
       console.log(event.target.files);
 
-      uploadTask(event.target.files);
+      this.uploadTask(event.target.files);
 
-      this.snackModalEl.computedStyleMap.display = 'block';
+      this.snackModalEl.style.display = 'block';
     });
   }
 
@@ -44,6 +47,12 @@ class DropBoxController {
           ajax.onerror = (event) => {
             reject(event);
           };
+
+          ajax.upload.onprogress = (event) => {
+            console.log(event);
+            this.uploadProgress(event, file);
+          };
+
           let formData = new FormData();
 
           formData.append('input-file', file);
@@ -54,5 +63,16 @@ class DropBoxController {
     });
 
     return Promise.all(promises);
+  }
+
+  uploadProgress(event, file) {
+    let loaded = event.loaded;
+    let total = event.total;
+    let porcent = parseInt((loaded / total) * 100);
+
+    this.progressBarEl.style.width = `${porcent}%`;
+
+    this.nameFileEl.innerHTML = file.nameFileEl;
+    this.timeleftEl.innerHTML;
   }
 }
