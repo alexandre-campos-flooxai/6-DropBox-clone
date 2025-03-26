@@ -7,25 +7,58 @@ class DropBoxController {
     this.nameFileEl = this.snackModalEl.querySelector('.filename');
     this.timeleftEl = this.snackModalEl.querySelector('.timeleft');
 
+    this.connectFireBase();
     this.initEvents();
+  }
+
+  connectFireBase() {
+    const firebaseConfig = {
+      apiKey: 'AIzaSyC4TGuCKdZfRMjXOuyO6946CfjjVNecFsQ',
+      authDomain: 'dropbox-app-c4b6f.firebaseapp.com',
+      databaseURL: 'https://dropbox-app-c4b6f-default-rtdb.firebaseio.com',
+      projectId: 'dropbox-app-c4b6f',
+      storageBucket: 'dropbox-app-c4b6f.firebasestorage.app',
+      messagingSenderId: '1076158729879',
+      appId: '1:1076158729879:web:aa0ff0262192d7ec0263d2',
+      measurementId: 'G-V465T6PW86',
+    };
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
   }
 
   initEvents() {
     this.btnSendFileEl.addEventListener('click', (event) => {
-      console.log('clicou', event);
-
       this.inputFilesEl.click();
     });
 
     this.inputFilesEl.addEventListener('change', (event) => {
-      console.log(event.target.files);
+      this.btnSendFileEl.disabled = true;
 
-      this.uploadTask(event.target.files);
+      this.uploadTask(event.target.files)
+        .then((responses) => {
+          responses.forEach((resp) => {
+            this.getFirebaseRef().push().set(resp.files['input-file']);
+          });
+          this.uploadComplete();
+        })
+        .catch((e) => {
+          this.uploadComplete();
+          console.log(e);
+        });
 
       this.modalShow();
-
-      this.inputFilesEl.value = '';
     });
+  }
+
+  uploadComplete() {
+    this.modalShow(false);
+    this.inputFilesEl.value = '';
+    this.btnSendFileEl.disabled = false;
+  }
+
+  getFirebaseRef() {
+    return firebase.database().ref('files');
   }
 
   modalShow(show = true) {
@@ -44,8 +77,6 @@ class DropBoxController {
           ajax.open('POST', '/upload');
 
           ajax.onload = (event) => {
-            this.modalShow(false);
-
             try {
               resolve(JSON.parse(ajax.responseText));
             } catch (e) {
@@ -53,12 +84,10 @@ class DropBoxController {
             }
           };
           ajax.onerror = (event) => {
-            this.modalShow(false);
             reject(event);
           };
 
           ajax.upload.onprogress = (event) => {
-            console.log(event);
             this.uploadProgress(event, file);
           };
 
@@ -86,10 +115,7 @@ class DropBoxController {
     this.progressBarEl.style.width = `${porcent}%`;
 
     this.nameFileEl.innerHTML = file.name;
-    console.log(file);
     this.timeleftEl.innerHTML = this.formatTimeToHuman(timeleft);
-
-    //  console.log(timespent, timeleft, porcent);
   }
 
   formatTimeToHuman(duration) {
