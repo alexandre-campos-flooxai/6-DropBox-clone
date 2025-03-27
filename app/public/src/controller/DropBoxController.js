@@ -7,7 +7,7 @@ class DropBoxController {
     this.nameFileEl = this.snackModalEl.querySelector('.filename');
     this.timeleftEl = this.snackModalEl.querySelector('.timeleft');
     this.listFilesEl = document.querySelector('#list-of-files-and-directories');
-    console.log(this.listFilesEl);
+    this.onselectionchange = new Event('selectionchange');
 
     this.connectFireBase();
     this.initEvents();
@@ -30,6 +30,10 @@ class DropBoxController {
   }
 
   initEvents() {
+    this.listFilesEl.addEventListener('selectionchange', (e) => {
+      console.log('selectionchange');
+    });
+
     this.btnSendFileEl.addEventListener('click', (event) => {
       this.inputFilesEl.click();
     });
@@ -328,13 +332,15 @@ class DropBoxController {
   }
 
   getFileView(file, key) {
-    console.log(file);
-    console.log(key);
+    // console.log(file);
+    // console.log(key);
     let li = document.createElement('li');
     li.dataset.key = key;
-    console.log(file);
+    // console.log(file);
     li.innerHTML = `${this.getFileIconView(file)}
       <div class="name text-center">${file.originalFilename}</div>`;
+
+    this.initEventsLi(li);
 
     return li;
   }
@@ -347,10 +353,51 @@ class DropBoxController {
         let key = snapShotItem.key;
         let data = snapShotItem.val();
 
-        console.log(data, key);
+        // console.log(data, key);
 
         this.listFilesEl.appendChild(this.getFileView(data[0], key));
       });
+    });
+  }
+
+  initEventsLi(li) {
+    li.addEventListener('click', (e) => {
+      this.listFilesEl.dispatchEvent(this.onselectionchange);
+
+      if (e.shiftKey) {
+        let firstLi = this.listFilesEl.querySelector('.selected');
+
+        if (firstLi) {
+          let indexStart;
+          let indexEnd;
+          let lis = li.parentElement.childNodes;
+
+          lis.forEach((el, index) => {
+            if (firstLi === el) indexStart = index;
+            if (li === el) indexEnd = index;
+          });
+
+          let index = [indexStart, indexEnd];
+
+          console.log(index);
+
+          lis.forEach((el, i) => {
+            if (i >= index[0] && i <= index[1]) {
+              el.classList.add('selected');
+            }
+          });
+
+          return true;
+        }
+      }
+
+      if (!e.ctrlKey) {
+        this.listFilesEl.querySelectorAll('li.selected').forEach((el) => {
+          el.classList.remove('selected');
+        });
+      }
+
+      li.classList.toggle('selected');
     });
   }
 }
