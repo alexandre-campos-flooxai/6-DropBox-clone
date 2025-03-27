@@ -6,9 +6,12 @@ class DropBoxController {
     this.progressBarEl = this.snackModalEl.querySelector('.mc-progress-bar-fg');
     this.nameFileEl = this.snackModalEl.querySelector('.filename');
     this.timeleftEl = this.snackModalEl.querySelector('.timeleft');
+    this.listFilesEl = document.querySelector('#list-of-files-and-directories');
+    console.log(this.listFilesEl);
 
     this.connectFireBase();
     this.initEvents();
+    this.readFiles();
   }
 
   connectFireBase() {
@@ -22,9 +25,8 @@ class DropBoxController {
       appId: '1:1076158729879:web:aa0ff0262192d7ec0263d2',
       measurementId: 'G-V465T6PW86',
     };
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
+
+    firebase.initializeApp(firebaseConfig);
   }
 
   initEvents() {
@@ -39,6 +41,7 @@ class DropBoxController {
         .then((responses) => {
           responses.forEach((resp) => {
             this.getFirebaseRef().push().set(resp.files['input-file']);
+            console.log(resp.files['input-file']);
           });
           this.uploadComplete();
         })
@@ -324,9 +327,30 @@ class DropBoxController {
     }
   }
 
-  getFileView(file) {
-    return `<li>${this.getFileIconView(file)}
-      <div class="name text-center">${file.name}</div>
-      </li>`;
+  getFileView(file, key) {
+    console.log(file);
+    console.log(key);
+    let li = document.createElement('li');
+    li.dataset.key = key;
+    console.log(file);
+    li.innerHTML = `${this.getFileIconView(file)}
+      <div class="name text-center">${file.originalFilename}</div>`;
+
+    return li;
+  }
+
+  readFiles() {
+    this.getFirebaseRef().on('value', (snapshot) => {
+      this.listFilesEl.innerHTML = '';
+      // console.log(snapshot);
+      snapshot.forEach((snapShotItem) => {
+        let key = snapShotItem.key;
+        let data = snapShotItem.val();
+
+        console.log(data, key);
+
+        this.listFilesEl.appendChild(this.getFileView(data[0], key));
+      });
+    });
   }
 }
