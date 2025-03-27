@@ -31,7 +31,9 @@ class DropBoxController {
 
   initEvents() {
     this.listFilesEl.addEventListener('selectionchange', (e) => {
-      console.log('selectionchange');
+     switch(this.getSelection().length){
+      
+     }
     });
 
     this.btnSendFileEl.addEventListener('click', (event) => {
